@@ -47,7 +47,6 @@ Create a local `.env` file based on `.env.example`.
 FOODALERTSSCRAPER/
 ├─ data/                  # Local state
 ├─ dist/                  # Build
-├─ docker/                # Crone schedule
 ├─ src/
 │  ├─ alerts/             # Alert storage, merging and sent-status logic
 │  ├─ config/             # Environment variables and source URLs
