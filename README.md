@@ -4,7 +4,7 @@ Scraper for public food safety alerts from GIS.
 
 ## Purpose
 
-The goal of this project is to collect public food safety alerts and prepare them for further processing, for example, by sending new alerts as telegram messages, since checking multiple sites daily can be time consuming.
+The goal of this project is to save time by collecting public food safety alerts from multiple websites and sending them as telegram messages.
 
 Currently supported source:
 - GIS warnings: https://www.gov.pl/web/gis/ostrzezenia

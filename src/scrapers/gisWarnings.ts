@@ -44,8 +44,13 @@ export async function scrapeGisWarnings(): Promise<AlertRecord[]> {
       ]);
       const batchNumber = extractValueByLabels(editorContentText, [
         "Numer partii",
+        "EAN",
       ]);
-      const producer = extractValueByLabels(editorContentText, ["Producent"]);
+      const producer = extractValueByLabels(editorContentText, [
+        "Producent",
+        "Marka",
+        "Dystrybutor w Polsce",
+      ]);
       const record: AlertRecord = {
         id: `GIS:${warning.href}`,
         source: "GIS",
