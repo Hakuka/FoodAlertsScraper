@@ -1,6 +1,6 @@
 # FoodAlertsScraper
 
-Scraper for public food safety alerts from GIS.
+Scraper for public food safety alerts.
 
 ## Purpose
 
@@ -36,14 +36,14 @@ NOTE: Parsing is done by matching keywords so sometimes its unstable.
 
 ## Installation and configuration
 
-`git clone https://github.com/TWOJ_LOGIN/FoodAlertsScraper.git`  
-`copy .env.example .env`  
+1. `git clone https://github.com/TWOJ_LOGIN/FoodAlertsScraper.git`  
+2. `copy .env.example .env`  
 with:  
 `TELEGRAM_BOT_TOKEN` is created with BotFather.  
 `TELEGRAM_CHAT_ID` is the target chat or group ID where alert messages should be sent.  
-`docker compose build`  
-`docker compose up -d`  
-Force start without waiting for crone: `docker compose exec food-alerts-scraper npm run start`
+3. `docker compose build`  
+4. `docker compose up -d`  
+5. Force start without waiting for crone: `docker compose exec food-alerts-scraper npm run start`
 
 ## Structure
 
