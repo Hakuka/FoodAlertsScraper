@@ -1,4 +1,4 @@
-import type { AlertRecord } from "../models/alertRecord.ts";
+import type { AlertRecord } from "../models/alertRecord.js";
 
 export function formatTelegramMessage(alert: AlertRecord): string {
   return [

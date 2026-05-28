@@ -1,0 +1,11 @@
+services:
+  food-alerts-scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: food-alerts-scraper
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
