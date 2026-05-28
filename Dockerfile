@@ -22,7 +22,7 @@ COPY src ./src
 
 RUN npm run build
 
-COPY docker/food-alerts-cron /etc/cron.d/alerts-cron
+COPY docker/alerts-cron /etc/cron.d/alerts-cron
 
 RUN chmod 0644 /etc/cron.d/alerts-cron \
   && crontab /etc/cron.d/alerts-cron
