@@ -11,10 +11,7 @@ The application keeps local alert state, so already sent alerts are not sent aga
 
 Currently supported:
 - GIS warnings: https://www.gov.pl/web/gis/ostrzezenia
-
-Planned:
-- RASFF Window: https://webgate.ec.europa.eu/rasff-window/screen/search
-
+- RASFF Window for PL: https://webgate.ec.europa.eu/rasff-window/screen/search
 
 ## Stack
 
@@ -26,11 +23,11 @@ Planned:
 
 ## Features
 
-- Scrapes GIS public food safety warnings.
-- Opens each GIS alert details page.
+- Scrapes GIS, RASFF (for Poland) public food safety warnings.
+- Opens each alert details page.
 - Extracts alert data.  
 NOTE: Parsing is done by matching keywords so sometimes its unstable.
-- Stores alert state locally in `data/alerts.json`.
+- Stores alert state locally in `data/alerts.json` as we only need info which one was sent and they are not that often.
 - Sends only unsent alerts to Telegram.
 - Marks successfully sent alerts as `sent: true`.
 
