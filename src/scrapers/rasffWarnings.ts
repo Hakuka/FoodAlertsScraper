@@ -1,6 +1,7 @@
 import { chromium, type Locator, type Page } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
+import { normalizeRasffPublishedDate } from "../utils/publishedDateParser.js";
 
 interface RasffListItem {
   reference: string;
@@ -30,13 +31,13 @@ export async function scrapeRasffWarnings(): Promise<AlertRecord[]> {
         continue;
       }
 
-      const product = await getMainInfoValueByHeading(page, "Product");
+      const product = await getNotificationValueByLabel(page, "Product");
 
       const record: AlertRecord = {
         id: `RASFF:${item.reference}`,
         source: "RASFF",
         title: item.title,
-        publishedAt: item.publishedAt,
+        publishedAt: normalizeRasffPublishedDate(item.publishedAt),
         url: item.detailUrl,
         scrapedAt,
         sent: false,
@@ -139,15 +140,25 @@ async function hasGisPublicWarning(page: Page): Promise<boolean> {
   return hasPublicWarningText && hasGisLink;
 }
 
-async function getMainInfoValueByHeading(
+async function getNotificationValueByLabel(
   page: Page,
-  headingName: string,
+  label: string,
 ): Promise<string | undefined> {
-  const value = page
-    .locator(
-      `xpath=//*[contains(concat(" ", normalize-space(@class), " "), " main-info ")]//h3[normalize-space()="${headingName}"]/following-sibling::*[1]`,
-    )
+  const item = page
+    .locator("#main-info app-nt-item")
+    .filter({
+      has: page.getByRole("heading", {
+        name: label,
+        exact: true,
+      }),
+    })
     .first();
+
+  if ((await item.count()) === 0) {
+    return undefined;
+  }
+
+  const value = item.locator("p").first();
 
   if ((await value.count()) === 0) {
     return undefined;

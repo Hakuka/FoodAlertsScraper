@@ -2,6 +2,7 @@ import { chromium } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.ts";
 import { extractValueByLabels } from "../utils/gisTextExtractors.js";
+import { normalizeGisPublishedDate } from "../utils/publishedDateParser.js";
 
 export async function scrapeGisWarnings(): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
@@ -55,7 +56,7 @@ export async function scrapeGisWarnings(): Promise<AlertRecord[]> {
         id: `GIS:${warning.href}`,
         source: "GIS",
         title: warning.title,
-        publishedAt: warning.date,
+        publishedAt: normalizeGisPublishedDate(warning.date),
         url: warning.href,
         scrapedAt,
         sent: false,

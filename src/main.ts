@@ -1,53 +1,62 @@
-// import { readStoredAlerts, writeStoredAlerts } from "./alerts/alertsStorage.js";
-// import { markAlertsAsSent } from "./alerts/markAsSent.js";
-// import { mergeNewAlerts } from "./alerts/mergeNewAlerts.js";
-// import { scrapeGisWarnings } from "./scrapers/gisWarnings.js";
-// import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
-// import { sendTelegramMessage } from "./telegram/telegramClient.js";
-// import { parseGisPublishDate } from "./utils/gisPublishDateParser.js";
-
-// const scrapedAlerts = await scrapeGisWarnings();
-// const storedAlerts = await readStoredAlerts();
-
-// //save new alerts
-// const mergedAlerts = mergeNewAlerts(storedAlerts, scrapedAlerts);
-// await writeStoredAlerts(mergedAlerts);
-
-// //sort unserted
-// const unsentAlerts = mergedAlerts.filter((alert) => !alert.sent);
-// const sortedUnsentAlerts = [...unsentAlerts].sort((a, b) => {
-//   return (
-//     parseGisPublishDate(a.publishedAt) - parseGisPublishDate(b.publishedAt)
-//   );
-// });
-
-// //sent and store
-// const sentAlertIds: string[] = [];
-// for (const alert of sortedUnsentAlerts) {
-//   const message = formatTelegramMessage(alert);
-//   await sendTelegramMessage(message);
-
-//   sentAlertIds.push(alert.id);
-// }
-
-// //update sent and save
-// const updatedAlerts = markAlertsAsSent(mergedAlerts, sentAlertIds);
-// await writeStoredAlerts(updatedAlerts);
-
+import { readStoredAlerts, writeStoredAlerts } from "./alerts/alertsStorage.js";
+import { markAlertsAsSent } from "./alerts/markAsSent.js";
+import { mergeNewAlerts } from "./alerts/mergeNewAlerts.js";
+import { scrapeGisWarnings } from "./scrapers/gisWarnings.js";
 import { scrapeRasffWarnings } from "./scrapers/rasffWarnings.js";
+import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
+import { sendTelegramMessage } from "./telegram/telegramClient.js";
+import { parsePublishedDateForSorting } from "./utils/publishedDateParser.js";
 
-const scrapedAlerts = await scrapeRasffWarnings();
+const gisAlerts = await scrapeGisWarnings();
+const rasffAlerts = await scrapeRasffWarnings();
 
-console.log(`Scraped RASFF alerts: ${scrapedAlerts.length}`);
+const scrapedAlerts = [...gisAlerts, ...rasffAlerts];
+const storedAlerts = await readStoredAlerts();
+
+// Save new alerts
+const mergedAlerts = mergeNewAlerts(storedAlerts, scrapedAlerts);
+await writeStoredAlerts(mergedAlerts);
+
+// Sort unsent alerts
+const unsentAlerts = mergedAlerts.filter((alert) => !alert.sent);
+
+const sortedUnsentAlerts = [...unsentAlerts].sort((a, b) => {
+  return (
+    parsePublishedDateForSorting(a.publishedAt) -
+    parsePublishedDateForSorting(b.publishedAt)
+  );
+});
+
+console.log(`Scraped GIS alerts: ${gisAlerts.length}`);
+console.log(`Scraped RASFF alerts: ${rasffAlerts.length}`);
+console.log(`Scraped total alerts: ${scrapedAlerts.length}`);
+console.log(`Unsent alerts: ${sortedUnsentAlerts.length}`);
 
 console.table(
-  scrapedAlerts.map((alert) => ({
-    id: alert.id,
-    source: alert.source,
-    title: alert.title,
-    publishedAt: alert.publishedAt ?? "NOT FOUND",
-    product: alert.product ?? "NOT FOUND",
-    url: alert.url,
-    sent: alert.sent,
+  sortedUnsentAlerts.map((record) => ({
+    source: record.source,
+    publishedAt: record.publishedAt ?? "NOT FOUND",
+    product: record.product ?? "NOT FOUND",
+    title: record.title,
+    url: record.url,
+    sent: record.sent,
   })),
 );
+
+// Send and store sent ids
+const sentAlertIds: string[] = [];
+
+for (const alert of sortedUnsentAlerts) {
+  const message = formatTelegramMessage(alert);
+
+  await sendTelegramMessage(message);
+
+  sentAlertIds.push(alert.id);
+}
+
+// Update sent status and save
+const updatedAlerts = markAlertsAsSent(mergedAlerts, sentAlertIds);
+
+await writeStoredAlerts(updatedAlerts);
+
+console.log(`Sent ${sentAlertIds.length} alert(s) to Telegram.`);
