@@ -1,6 +1,8 @@
 import { chromium, type Locator, type Page } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
+import { getNotificationValueByLabel } from "../utils/getNotificationValueByLabel.js";
+import { normalizeWhiteSpaces } from "../utils/normalizeWhiteSpaces.js";
 import { normalizeRasffPublishedDate } from "../utils/publishedDateParser.js";
 
 interface RasffListItem {
@@ -27,7 +29,7 @@ export async function scrapeRasffWarnings(): Promise<AlertRecord[]> {
       const shouldSkipAlert = await hasGisPublicWarning(page);
 
       if (shouldSkipAlert) {
-        console.log(`Skipped GIS duplicate: ${item.reference}`);
+        //console.log(`Skipped GIS duplicate: ${item.reference}`);
         continue;
       }
 
@@ -138,42 +140,4 @@ async function hasGisPublicWarning(page: Page): Promise<boolean> {
   const hasGisLink = (await gisLinks.count()) > 0;
 
   return hasPublicWarningText && hasGisLink;
-}
-
-async function getNotificationValueByLabel(
-  page: Page,
-  label: string,
-): Promise<string | undefined> {
-  const item = page
-    .locator("#main-info app-nt-item")
-    .filter({
-      has: page.getByRole("heading", {
-        name: label,
-        exact: true,
-      }),
-    })
-    .first();
-
-  if ((await item.count()) === 0) {
-    return undefined;
-  }
-
-  const value = item.locator("p").first();
-
-  if ((await value.count()) === 0) {
-    return undefined;
-  }
-
-  const text = await value.innerText();
-  const normalizedText = normalizeWhiteSpaces(text);
-
-  if (!normalizedText) {
-    return undefined;
-  }
-
-  return normalizedText;
-}
-
-function normalizeWhiteSpaces(text: string): string {
-  return text.trim().replace(/\s+/g, " ");
 }

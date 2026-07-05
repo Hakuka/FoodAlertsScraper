@@ -52,7 +52,7 @@ FOODALERTSSCRAPER/
 │  ├─ alerts/             # Alert storage, merging and sent-status logic
 │  ├─ config/             # Environment variables and source URLs
 │  ├─ models/             # Models
-│  ├─ scrapers/           # Scrappers per source
+│  ├─ scrapers/           # Scrapers per source
 │  ├─ telegram/           # Telegram message formatting and sending
 │  ├─ utils/              # Utils
 │  └─ main.ts             

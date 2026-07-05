@@ -5,7 +5,7 @@ export interface AlertRecord {
   id: string;
   source: AlertSource;
   title: string;
-  publishedAt?: string;
+  publishedAt: string;
   url: string;
   //product
   product?: string;

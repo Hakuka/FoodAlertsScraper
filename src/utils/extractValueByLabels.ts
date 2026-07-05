@@ -1,10 +1,3 @@
-// For GIS
-// .editor-content return something like:
-// Szczegóły dotyczące produktu:
-// Produkt/Nazwa produktu: xxx
-// Numer partii: xxx
-// Producent: xxx
-
 export function extractValueByLabels(
   text: string,
   labels: string[],
