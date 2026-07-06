@@ -1,8 +1,10 @@
-import { chromium, type Locator, type Page } from "playwright";
+import { chromium, type Page } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
+import { getCellText } from "../utils/getCellText.js";
 import { getNotificationValueByLabel } from "../utils/getNotificationValueByLabel.js";
-import { normalizeWhiteSpaces } from "../utils/normalizeWhiteSpaces.js";
+import { getReferenceUrl } from "../utils/getReferenceUrl.js";
+import { hasGisPublicWarning } from "../utils/hasGisPublicWarning.js";
 import { normalizeRasffPublishedDate } from "../utils/publishedDateParser.js";
 
 interface RasffListItem {
@@ -86,58 +88,4 @@ async function getRasffListItems(page: Page): Promise<RasffListItem[]> {
   }
 
   return listItems;
-}
-
-async function getCellText(row: Locator, columnName: string): Promise<string> {
-  const cell = row.locator(`td[data-col-label="${columnName}"]`);
-
-  if ((await cell.count()) === 0) {
-    return "";
-  }
-
-  const text = await cell.innerText();
-
-  return normalizeWhiteSpaces(text);
-}
-
-async function getReferenceUrl(row: Locator): Promise<string | undefined> {
-  const referenceLink = row.locator('td[data-col-label="Reference"] a').first();
-
-  if ((await referenceLink.count()) === 0) {
-    return undefined;
-  }
-
-  const href = await referenceLink.getAttribute("href");
-
-  if (!href) {
-    return undefined;
-  }
-
-  return new URL(href, Urls.rasffWarnings).toString();
-}
-
-async function hasGisPublicWarning(page: Page): Promise<boolean> {
-  const measuresTable = page.locator("app-measures-table");
-
-  try {
-    await measuresTable.waitFor({ timeout: 5000 });
-  } catch {
-    return false;
-  }
-
-  const measuresText = normalizeWhiteSpaces(
-    await measuresTable.innerText(),
-  ).toLowerCase();
-
-  const hasPublicWarningText = measuresText.includes(
-    "public warning - press release",
-  );
-
-  const gisLinks = measuresTable.locator(
-    'a[href^="https://www.gov.pl/web/gis/"]',
-  );
-
-  const hasGisLink = (await gisLinks.count()) > 0;
-
-  return hasPublicWarningText && hasGisLink;
 }

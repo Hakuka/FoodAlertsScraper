@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
-import { extractValueByLabels } from "../utils/extractValueByLabels.js";
+import { getValueByLabels } from "../utils/getValueByLabels.js";
 import { normalizeWhiteSpaces } from "../utils/normalizeWhiteSpaces.js";
 import { normalizeGisPublishedDate } from "../utils/publishedDateParser.js";
 
@@ -29,17 +29,17 @@ export async function scrapeGisWarnings(): Promise<AlertRecord[]> {
         .locator(".editor-content")
         .innerText();
 
-      const product = extractValueByLabels(editorContentText, [
+      const product = getValueByLabels(editorContentText, [
         "Nazwa produktu",
         "Produkt",
       ]);
 
-      const batchNumber = extractValueByLabels(editorContentText, [
+      const batchNumber = getValueByLabels(editorContentText, [
         "Numer partii",
         "EAN",
       ]);
 
-      const producer = extractValueByLabels(editorContentText, [
+      const producer = getValueByLabels(editorContentText, [
         "Producent",
         "Marka",
         "Dystrybutor w Polsce",

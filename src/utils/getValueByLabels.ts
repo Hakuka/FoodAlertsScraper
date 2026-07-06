@@ -1,4 +1,4 @@
-export function extractValueByLabels(
+export function getValueByLabels(
   text: string,
   labels: string[],
 ): string | undefined {

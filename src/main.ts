@@ -32,31 +32,29 @@ console.log(`Scraped RASFF alerts: ${rasffAlerts.length}`);
 console.log(`Scraped total alerts: ${scrapedAlerts.length}`);
 console.log(`Unsent alerts: ${sortedUnsentAlerts.length}`);
 
-console.table(
-  sortedUnsentAlerts.map((record) => ({
-    source: record.source,
-    publishedAt: record.publishedAt ?? "NOT FOUND",
-    product: record.product ?? "NOT FOUND",
-    title: record.title,
-    url: record.url,
-    sent: record.sent,
-  })),
-);
+// console.table(
+//   sortedUnsentAlerts.map((record) => ({
+//     source: record.source,
+//     publishedAt: record.publishedAt ?? "NOT FOUND",
+//     product: record.product ?? "NOT FOUND",
+//     title: record.title,
+//     url: record.url,
+//     sent: record.sent,
+//   })),
+// );
 
-// Send and store sent ids
-const sentAlertIds: string[] = [];
+// Send alerts and save sent status after each successful message
+let alertsToSave = mergedAlerts;
+let sentAlertsCount = 0;
 
 for (const alert of sortedUnsentAlerts) {
   const message = formatTelegramMessage(alert);
 
   await sendTelegramMessage(message);
-
-  sentAlertIds.push(alert.id);
+  alertsToSave = markAlertsAsSent(alertsToSave, [alert.id]);
+  await writeStoredAlerts(alertsToSave);
+  sentAlertsCount++;
+  console.log(`Sent and marked as sent: ${alert.id}`);
 }
 
-// Update sent status and save
-const updatedAlerts = markAlertsAsSent(mergedAlerts, sentAlertIds);
-
-await writeStoredAlerts(updatedAlerts);
-
-console.log(`Sent ${sentAlertIds.length} alert(s) to Telegram.`);
+console.log(`Sent ${sentAlertsCount} alert(s) to Telegram.`);
