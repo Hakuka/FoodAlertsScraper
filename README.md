@@ -33,7 +33,7 @@ NOTE: Parsing is done by matching keywords so sometimes its unstable.
 
 ## Installation and configuration
 
-1. `git clone https://github.com/TWOJ_LOGIN/FoodAlertsScraper.git`  
+1. git clone  
 2. `copy .env.example .env`  
 with:  
 `TELEGRAM_BOT_TOKEN` is created with BotFather.  
