@@ -40,7 +40,7 @@ with:
 `TELEGRAM_CHAT_ID` is the target chat or group ID where alert messages should be sent.  
 3. `docker compose build`  
 4. `docker compose up -d`  
-5. Force start without waiting for crone: `docker compose exec food-alerts-scraper npm run start`
+5. Force start without waiting for cron: `docker compose exec food-alerts-scraper npm run start`
 
 ## Structure
 
