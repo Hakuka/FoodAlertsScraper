@@ -1,0 +1,18 @@
+# FoodAlertsScraper: Codex may edit and inspect the repository locally,
+# but publishing changes to a Git remote is reserved for the user.
+prefix_rule(
+    pattern = ["git", "push"],
+    decision = "forbidden",
+    justification = "Do not push from Codex. Leave remote publishing to the user.",
+    match = [
+        "git push",
+        "git push origin main",
+        "git push --force",
+        "git push --tags",
+    ],
+    not_match = [
+        "git status",
+        "git diff",
+        "git pull",
+    ],
+)

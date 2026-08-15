@@ -9,7 +9,6 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/main.js",
-    "telegram:test": "tsx src/telegram/testTelegram.ts"
   },
   "repository": {
     "type": "git",
