@@ -3,9 +3,7 @@
   "version": "1.0.0",
   "description": "Scraper for public food safety alerts from GIS and RASFF using Playwright and TypeScript.",
   "type": "module",
-  "main": "index.js",
   "scripts": {
-    "scrape": "tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/main.js"
@@ -22,12 +20,11 @@
   },
   "homepage": "https://github.com/Hakuka/FoodAlertsScraper#readme",
   "devDependencies": {
-    "@types/node": "^25.9.1",
-    "playwright": "^1.60.0",
-    "tsx": "^4.22.3",
+    "@types/node": "^22.0.0",
     "typescript": "^6.0.3"
   },
   "dependencies": {
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "playwright": "^1.60.0"
   }
 }
