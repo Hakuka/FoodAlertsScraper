@@ -6,7 +6,7 @@ export class TelegramApiError extends Error {
 
 export async function sendTelegramMessage(message: string): Promise<void> {
   if (!Env.telegramBotToken) {
-    throw new Error("Missing TELEGRAM_BOT_TOKEN in .env");
+    throw new Error("Telegram bot token Docker secret is empty");
   }
 
   if (!Env.telegramChatId) {

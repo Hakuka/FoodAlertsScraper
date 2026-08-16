@@ -33,14 +33,14 @@ NOTE: Parsing is done by matching keywords so sometimes its unstable.
 
 ## Installation and configuration
 
-1. git clone  
-2. `copy .env.example .env`  
-with:  
-`TELEGRAM_BOT_TOKEN` is created with BotFather.  
-`TELEGRAM_CHAT_ID` is the target chat or group ID where alert messages should be sent.  
-3. `docker compose build`  
-4. `docker compose up -d`  
-5. Force start without waiting for cron: `docker compose exec food-alerts-scraper npm run start`
+1. `git clone`
+2. `copy .env.example .env`
+   Set `TELEGRAM_CHAT_ID` to the target chat or group ID where alert messages should be sent.
+   For an existing installation, remove the legacy `TELEGRAM_BOT_TOKEN` entry from `.env`.
+3. Create `secrets/telegram_bot_token.txt` and paste the bot token from BotFather as its only content.
+4. `docker compose build`
+5. `docker compose up -d`
+6. Force start without waiting for cron: `docker compose exec food-alerts-scraper npm run start`
 
 ## Structure
 

@@ -6,6 +6,7 @@ dist/
 
 # local environment
 .env
+secrets/
 
 # local app state
 data/alerts.json
