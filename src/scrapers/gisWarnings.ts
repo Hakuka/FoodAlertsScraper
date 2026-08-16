@@ -12,12 +12,14 @@ interface GisListItem {
   href: string;
 }
 
-export async function scrapeGisWarnings(): Promise<ScrapeResult> {
+export async function scrapeGisWarnings(
+  publishedSince?: string,
+): Promise<ScrapeResult> {
   try {
     return {
       source: "GIS",
       status: "success",
-      alerts: await collectGisWarnings(),
+      alerts: await collectGisWarnings(publishedSince),
     };
   } catch (error) {
     return {
@@ -28,7 +30,9 @@ export async function scrapeGisWarnings(): Promise<ScrapeResult> {
   }
 }
 
-async function collectGisWarnings(): Promise<AlertRecord[]> {
+async function collectGisWarnings(
+  publishedSince?: string,
+): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
 
   try {
@@ -40,6 +44,12 @@ async function collectGisWarnings(): Promise<AlertRecord[]> {
     const records: AlertRecord[] = [];
 
     for (const item of listeItems) {
+      const publishedAt = normalizeGisPublishedDate(item.date);
+
+      if (publishedSince && publishedAt < publishedSince) {
+        continue;
+      }
+
       await page.goto(item.href, { waitUntil: "domcontentloaded" });
 
       const editorContentText = await page
@@ -66,7 +76,7 @@ async function collectGisWarnings(): Promise<AlertRecord[]> {
         id: `GIS:${item.href}`,
         source: "GIS",
         title: item.title,
-        publishedAt: normalizeGisPublishedDate(item.date),
+        publishedAt,
         url: item.href,
         scrapedAt,
         sent: false,

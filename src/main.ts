@@ -4,19 +4,32 @@ import { mergeNewAlerts } from "./alerts/mergeNewAlerts.js";
 import { scrapeGisWarnings } from "./scrapers/gisWarnings.js";
 import { scrapeRasffWarnings } from "./scrapers/rasffWarnings.js";
 import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
+import { shouldSendTelegramAlert } from "./telegram/shouldSendTelegramAlert.js";
 import { sendTelegramMessage } from "./telegram/telegramClient.js";
-import { parsePublishedDateForSorting } from "./utils/publishedDateParser.js";
+import {
+  getTwoMonthsAgoIsoDate,
+  parsePublishedDateForSorting,
+} from "./utils/publishedDateParser.js";
+
+const storedAlerts = await readStoredAlerts();
+const firstRunPublishedSince = getTwoMonthsAgoIsoDate();
+const gisPublishedSince = storedAlerts.some((alert) => alert.source === "GIS")
+  ? undefined
+  : firstRunPublishedSince;
+const rasffPublishedSince = storedAlerts.some(
+  (alert) => alert.source === "RASFF",
+)
+  ? undefined
+  : firstRunPublishedSince;
 
 const scraperResults = await Promise.all([
-  scrapeGisWarnings(),
-  scrapeRasffWarnings(),
+  scrapeGisWarnings(gisPublishedSince),
+  scrapeRasffWarnings(rasffPublishedSince),
 ]);
 
 const scrapedAlerts = scraperResults.flatMap((result) =>
   result.status === "success" ? result.alerts : [],
 );
-
-const storedAlerts = await readStoredAlerts();
 
 // Save new alerts
 const mergedAlerts = mergeNewAlerts(storedAlerts, scrapedAlerts);
@@ -61,6 +74,11 @@ let alertsToSave = mergedAlerts;
 let sentAlertsCount = 0;
 
 for (const alert of sortedUnsentAlerts) {
+  if (!shouldSendTelegramAlert(alert)) {
+    console.warn(`Skipped incomplete RASFF alert: ${alert.id}`);
+    continue;
+  }
+
   const message = formatTelegramMessage(alert);
 
   await sendTelegramMessage(message);

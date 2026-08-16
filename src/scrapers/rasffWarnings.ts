@@ -15,12 +15,14 @@ interface RasffListItem {
   detailUrl: string;
 }
 
-export async function scrapeRasffWarnings(): Promise<ScrapeResult> {
+export async function scrapeRasffWarnings(
+  publishedSince?: string,
+): Promise<ScrapeResult> {
   try {
     return {
       source: "RASFF",
       status: "success",
-      alerts: await collectRasffWarnings(),
+      alerts: await collectRasffWarnings(publishedSince),
     };
   } catch (error) {
     return {
@@ -31,7 +33,9 @@ export async function scrapeRasffWarnings(): Promise<ScrapeResult> {
   }
 }
 
-async function collectRasffWarnings(): Promise<AlertRecord[]> {
+async function collectRasffWarnings(
+  publishedSince?: string,
+): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
 
   try {
@@ -43,6 +47,12 @@ async function collectRasffWarnings(): Promise<AlertRecord[]> {
     const records: AlertRecord[] = [];
 
     for (const item of listItems) {
+      const publishedAt = normalizeRasffPublishedDate(item.publishedAt);
+
+      if (publishedSince && publishedAt < publishedSince) {
+        continue;
+      }
+
       await page.goto(item.detailUrl, { waitUntil: "domcontentloaded" });
 
       const shouldSkipAlert = await hasGisPublicWarning(page);
@@ -58,7 +68,7 @@ async function collectRasffWarnings(): Promise<AlertRecord[]> {
         id: `RASFF:${item.reference}`,
         source: "RASFF",
         title: item.title,
-        publishedAt: normalizeRasffPublishedDate(item.publishedAt),
+        publishedAt,
         url: item.detailUrl,
         scrapedAt,
         sent: false,

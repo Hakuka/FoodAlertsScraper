@@ -40,6 +40,26 @@ export function parsePublishedDateForSorting(date: string | undefined): number {
   return new Date(year, month - 1, day).getTime();
 }
 
+export function getTwoMonthsAgoIsoDate(currentDate = new Date()): string {
+  const currentDay = currentDate.getDate();
+  const cutoffDate = new Date(currentDate);
+
+  cutoffDate.setDate(1);
+  cutoffDate.setMonth(cutoffDate.getMonth() - 2);
+
+  const lastDayOfCutoffMonth = new Date(
+    cutoffDate.getFullYear(),
+    cutoffDate.getMonth() + 1,
+    0,
+  ).getDate();
+
+  return formatIsoDate(
+    cutoffDate.getFullYear(),
+    cutoffDate.getMonth() + 1,
+    Math.min(currentDay, lastDayOfCutoffMonth),
+  );
+}
+
 function formatIsoDate(year: number, month: number, day: number): string {
   return [
     year.toString(),
