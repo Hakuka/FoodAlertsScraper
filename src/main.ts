@@ -7,10 +7,15 @@ import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
 import { sendTelegramMessage } from "./telegram/telegramClient.js";
 import { parsePublishedDateForSorting } from "./utils/publishedDateParser.js";
 
-const gisAlerts = await scrapeGisWarnings();
-const rasffAlerts = await scrapeRasffWarnings();
+const scraperResults = await Promise.all([
+  scrapeGisWarnings(),
+  scrapeRasffWarnings(),
+]);
 
-const scrapedAlerts = [...gisAlerts, ...rasffAlerts];
+const scrapedAlerts = scraperResults.flatMap((result) =>
+  result.status === "success" ? result.alerts : [],
+);
+
 const storedAlerts = await readStoredAlerts();
 
 // Save new alerts
@@ -27,8 +32,16 @@ const sortedUnsentAlerts = [...unsentAlerts].sort((a, b) => {
   );
 });
 
-console.log(`Scraped GIS alerts: ${gisAlerts.length}`);
-console.log(`Scraped RASFF alerts: ${rasffAlerts.length}`);
+for (const result of scraperResults) {
+  if (result.status === "success") {
+    console.log(
+      `${result.source} scraper succeeded: ${result.alerts.length} alert(s).`,
+    );
+  } else {
+    console.error(`${result.source} scraper failed:`, result.error);
+  }
+}
+
 console.log(`Scraped total alerts: ${scrapedAlerts.length}`);
 console.log(`Unsent alerts: ${sortedUnsentAlerts.length}`);
 

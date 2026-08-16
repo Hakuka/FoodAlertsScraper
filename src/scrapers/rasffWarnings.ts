@@ -1,6 +1,7 @@
 import { chromium, type Page } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
+import type { ScrapeResult } from "../models/scrapeResult.js";
 import { getCellText } from "../utils/getCellText.js";
 import { getNotificationValueByLabel } from "../utils/getNotificationValueByLabel.js";
 import { getReferenceUrl } from "../utils/getReferenceUrl.js";
@@ -14,11 +15,27 @@ interface RasffListItem {
   detailUrl: string;
 }
 
-export async function scrapeRasffWarnings(): Promise<AlertRecord[]> {
+export async function scrapeRasffWarnings(): Promise<ScrapeResult> {
+  try {
+    return {
+      source: "RASFF",
+      status: "success",
+      alerts: await collectRasffWarnings(),
+    };
+  } catch (error) {
+    return {
+      source: "RASFF",
+      status: "failed",
+      error,
+    };
+  }
+}
+
+async function collectRasffWarnings(): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
 
   try {
+    const page = await browser.newPage();
     await page.goto(Urls.rasffWarnings, { waitUntil: "domcontentloaded" });
 
     const scrapedAt = new Date().toISOString();

@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import { Urls } from "../config/urls.js";
 import type { AlertRecord } from "../models/alertRecord.js";
+import type { ScrapeResult } from "../models/scrapeResult.js";
 import { getValueByLabels } from "../utils/getValueByLabels.js";
 import { normalizeWhiteSpaces } from "../utils/normalizeWhiteSpaces.js";
 import { normalizeGisPublishedDate } from "../utils/publishedDateParser.js";
@@ -11,11 +12,27 @@ interface GisListItem {
   href: string;
 }
 
-export async function scrapeGisWarnings(): Promise<AlertRecord[]> {
+export async function scrapeGisWarnings(): Promise<ScrapeResult> {
+  try {
+    return {
+      source: "GIS",
+      status: "success",
+      alerts: await collectGisWarnings(),
+    };
+  } catch (error) {
+    return {
+      source: "GIS",
+      status: "failed",
+      error,
+    };
+  }
+}
+
+async function collectGisWarnings(): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
 
   try {
+    const page = await browser.newPage();
     await page.goto(Urls.gisWarnings, { waitUntil: "domcontentloaded" });
 
     const scrapedAt = new Date().toISOString();
