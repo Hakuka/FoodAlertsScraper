@@ -1,16 +1,23 @@
 services:
   food-alerts-scraper:
+    image: food-alerts-scraper:1.0
+
     build:
       context: .
       dockerfile: Dockerfile
+
     container_name: food-alerts-scraper
     restart: unless-stopped
+
     env_file:
       - .env
+
     environment:
       TELEGRAM_BOT_TOKEN: ""
+
     secrets:
       - telegram_bot_token
+
     volumes:
       - ./data:/app/data
 
