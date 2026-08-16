@@ -5,11 +5,17 @@ import { scrapeGisWarnings } from "./scrapers/gisWarnings.js";
 import { scrapeRasffWarnings } from "./scrapers/rasffWarnings.js";
 import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
 import { shouldSendTelegramAlert } from "./telegram/shouldSendTelegramAlert.js";
-import { sendTelegramMessage } from "./telegram/telegramClient.js";
+import {
+  getTelegramMessageDelay,
+  sendTelegramMessageWithRetry,
+  TELEGRAM_BATCH_INTERVAL_MS,
+} from "./telegram/telegramDelivery.js";
+import { TelegramApiError } from "./telegram/telegramClient.js";
 import {
   getTwoMonthsAgoIsoDate,
   parsePublishedDateForSorting,
 } from "./utils/publishedDateParser.js";
+import { wait } from "./utils/wait.js";
 
 const storedAlerts = await readStoredAlerts();
 const firstRunPublishedSince = getTwoMonthsAgoIsoDate();
@@ -73,15 +79,42 @@ console.log(`Unsent alerts: ${sortedUnsentAlerts.length}`);
 let alertsToSave = mergedAlerts;
 let sentAlertsCount = 0;
 
-for (const alert of sortedUnsentAlerts) {
+const alertsToSend = sortedUnsentAlerts.filter((alert) => {
   if (!shouldSendTelegramAlert(alert)) {
     console.warn(`Skipped incomplete RASFF alert: ${alert.id}`);
-    continue;
+    return false;
+  }
+
+  return true;
+});
+
+for (const [messageIndex, alert] of alertsToSend.entries()) {
+  const delay = getTelegramMessageDelay(messageIndex);
+
+  if (delay > 0) {
+    if (delay === TELEGRAM_BATCH_INTERVAL_MS) {
+      console.log("Telegram batch limit reached. Waiting 1 minute...");
+    }
+
+    await wait(delay);
   }
 
   const message = formatTelegramMessage(alert);
 
-  await sendTelegramMessage(message);
+  try {
+    await sendTelegramMessageWithRetry(message);
+  } catch (error) {
+    if (!(error instanceof TelegramApiError)) {
+      throw error;
+    }
+
+    console.error(
+      `Telegram send failed; alert remains unsent: ${alert.id}`,
+      error,
+    );
+    continue;
+  }
+
   alertsToSave = markAlertsAsSent(alertsToSave, [alert.id]);
   await writeStoredAlerts(alertsToSave);
   sentAlertsCount++;
