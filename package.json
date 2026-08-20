@@ -6,7 +6,9 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "docker:build": "docker build -t food-alerts-scraper:1.0 .",
+    "docker:export": "docker save -o food-alerts-scraper.tar food-alerts-scraper:1.0"
   },
   "repository": {
     "type": "git",
