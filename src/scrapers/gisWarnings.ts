@@ -12,6 +12,12 @@ interface GisListItem {
   href: string;
 }
 
+interface RawGisListItem {
+  date: string;
+  title: string;
+  href: string;
+}
+
 export async function scrapeGisWarnings(
   publishedSince?: string,
 ): Promise<ScrapeResult> {
@@ -20,6 +26,16 @@ export async function scrapeGisWarnings(
       source: "GIS",
       status: "success",
       alerts: await collectGisWarnings(publishedSince),
+    };
+  } catch (firstError) {
+    console.warn("GIS scraper failed. Retrying once...", firstError);
+  }
+
+  try {
+    return {
+      source: "GIS",
+      status: "success",
+      alerts: await collectGisWarnings(publishedSince, true),
     };
   } catch (error) {
     return {
@@ -32,6 +48,7 @@ export async function scrapeGisWarnings(
 
 async function collectGisWarnings(
   publishedSince?: string,
+  skipIncompleteListItems = false,
 ): Promise<AlertRecord[]> {
   const browser = await chromium.launch({ headless: true });
 
@@ -40,10 +57,10 @@ async function collectGisWarnings(
     await page.goto(Urls.gisWarnings, { waitUntil: "domcontentloaded" });
 
     const scrapedAt = new Date().toISOString();
-    const listeItems = await getGisListItems(page);
+    const listItems = await getGisListItems(page, skipIncompleteListItems);
     const records: AlertRecord[] = [];
 
-    for (const item of listeItems) {
+    for (const item of listItems) {
       const publishedAt = normalizeGisPublishedDate(item.date);
 
       if (publishedSince && publishedAt < publishedSince) {
@@ -105,30 +122,57 @@ async function collectGisWarnings(
 
 async function getGisListItems(
   page: import("playwright").Page,
+  skipIncompleteListItems: boolean,
 ): Promise<GisListItem[]> {
-  const warningItems = page.locator(".article-area__article").locator("li");
+  const warningItems = page.locator(
+    ".article-area__article .art-prev > ul > li",
+  );
 
   // Wait until at least one warning row is loaded
   await warningItems.first().waitFor();
 
-  const rows = await warningItems.all();
+  const rawItems: RawGisListItem[] = await warningItems.evaluateAll((rows) =>
+    rows.map((row) => {
+      const link = row.querySelector<HTMLAnchorElement>(".title a");
+
+      return {
+        date: row.querySelector(".event .date")?.textContent ?? "",
+        title: link?.textContent ?? "",
+        href: link?.getAttribute("href") ?? "",
+      };
+    }),
+  );
+
+  const incompleteItemPositions = rawItems.flatMap((item, index) =>
+    item.date.trim() && item.title.trim() && item.href ? [] : [index + 1],
+  );
+
+  if (incompleteItemPositions.length > 0 && !skipIncompleteListItems) {
+    throw new Error(
+      `Incomplete GIS list item(s) at position(s): ${incompleteItemPositions.join(", ")}`,
+    );
+  }
+
   const warnings: GisListItem[] = [];
 
-  for (const row of rows) {
-    const date = await row.locator(".event .date").innerText();
-    const link = row.locator(".title a").first();
-    const title = await link.innerText();
-    const href = await link.getAttribute("href");
+  for (const [index, item] of rawItems.entries()) {
+    const date = normalizeWhiteSpaces(item.date);
+    const title = normalizeWhiteSpaces(item.title);
 
-    if (!href) {
+    if (!date || !title || !item.href) {
+      console.warn(`Skipped incomplete GIS list item at position ${index + 1}.`);
       continue;
     }
 
     warnings.push({
-      date: normalizeWhiteSpaces(date),
-      title: normalizeWhiteSpaces(title),
-      href: new URL(href, Urls.gisWarnings).toString(),
+      date,
+      title,
+      href: new URL(item.href, Urls.gisWarnings).toString(),
     });
+  }
+
+  if (warnings.length === 0) {
+    throw new Error("No complete GIS warning list items found.");
   }
 
   return warnings;
