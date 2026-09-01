@@ -5,18 +5,19 @@ import { scrapeGisWarnings } from "./scrapers/gisWarnings.js";
 import { scrapeRasffWarnings } from "./scrapers/rasffWarnings.js";
 import { formatTelegramMessage } from "./telegram/formatTelegramMessage.js";
 import { shouldSendTelegramAlert } from "./telegram/shouldSendTelegramAlert.js";
+import { TelegramApiError } from "./telegram/telegramClient.js";
 import {
   getTelegramMessageDelay,
   sendTelegramMessageWithRetry,
   TELEGRAM_BATCH_INTERVAL_MS,
 } from "./telegram/telegramDelivery.js";
-import { TelegramApiError } from "./telegram/telegramClient.js";
 import {
   getTwoMonthsAgoIsoDate,
   parsePublishedDateForSorting,
 } from "./utils/publishedDateParser.js";
 import { wait } from "./utils/wait.js";
 
+console.log(">>> START OF NEW RUN <<<");
 const storedAlerts = await readStoredAlerts();
 const firstRunPublishedSince = getTwoMonthsAgoIsoDate();
 const gisPublishedSince = storedAlerts.some((alert) => alert.source === "GIS")
@@ -28,10 +29,12 @@ const rasffPublishedSince = storedAlerts.some(
   ? undefined
   : firstRunPublishedSince;
 
+console.log("Scraper start");
 const scraperResults = await Promise.all([
   scrapeGisWarnings(gisPublishedSince),
   scrapeRasffWarnings(rasffPublishedSince),
 ]);
+console.log("Scraper end");
 
 const scrapedAlerts = scraperResults.flatMap((result) =>
   result.status === "success" ? result.alerts : [],
@@ -63,17 +66,6 @@ for (const result of scraperResults) {
 
 console.log(`Scraped total alerts: ${scrapedAlerts.length}`);
 console.log(`Unsent alerts: ${sortedUnsentAlerts.length}`);
-
-// console.table(
-//   sortedUnsentAlerts.map((record) => ({
-//     source: record.source,
-//     publishedAt: record.publishedAt ?? "NOT FOUND",
-//     product: record.product ?? "NOT FOUND",
-//     title: record.title,
-//     url: record.url,
-//     sent: record.sent,
-//   })),
-// );
 
 // Send alerts and save sent status after each successful message
 let alertsToSave = mergedAlerts;
@@ -122,3 +114,4 @@ for (const [messageIndex, alert] of alertsToSend.entries()) {
 }
 
 console.log(`Sent ${sentAlertsCount} alert(s) to Telegram.`);
+console.log(">>> END OF THE RUN <<<");
