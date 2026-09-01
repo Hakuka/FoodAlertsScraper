@@ -26,7 +26,7 @@ RUN printf '%s\n' \
   'SHELL=/bin/sh' \
   'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
   '' \
-  '0 0,6,12,15,18 * * * root . /etc/environment; cd /app && npm run start >> /proc/1/fd/1 2>> /proc/1/fd/2' \
+  '0 12 * * * root . /etc/environment; cd /app && npm run start >> /proc/1/fd/1 2>> /proc/1/fd/2' \
   > /etc/cron.d/alerts-cron \
   && chmod 0644 /etc/cron.d/alerts-cron
 
